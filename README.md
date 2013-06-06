@@ -2,7 +2,19 @@ RecDNSTester
 ============
 
 Python program to test DNS servers for recursion
+
 This is my first program. It is probably inefficient and perhaps buggy.
+
+```
+## Tested on Python 2.7
+## Requires python-netaddr, python-dnspython and python-nmap
+## Written by KamiNuvini - kami@nuvini.com
+## 
+## This program scans the given IPs for DNS Recursion. By default, we'll check if the IPs resolve google.com
+## You can also use -host to do a lookup on other domains.
+## The IPs that resolved the given domain will be displayed
+```
+
 
 ```
 usage: RecDNSTester.py [-h] [-v] [-host HOST] [-i IPS [IPS ...]] [-f FILE]
