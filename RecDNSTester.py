@@ -20,29 +20,30 @@ def valid_file(parser, filename):
 # Convert & Validate 1-100 ranges
 def ip_range(ip):
     try:
-        ip = ip.replace(",", "")
+        r = []
         for i in list(netaddr.IPGlob(ip)):
-            valid_ips.append(i)
-    except:
+            r.append(i)
+        return r
+    except netaddr.core.AddrFormatError:
         invalid_ips.append(ip)
 
 # Convert & Validate /24 ranges
 def ip_cidr(ip):
     try:
-        ip = ip.replace(",", "")
+        r = []
         for i in list(netaddr.IPNetwork(ip)):
-            valid_ips.append(i)
-    except:
+            r.append(i)
+        return r
+    except netaddr.core.AddrFormatError:
         invalid_ips.append(ip)
     
 # Validate normal IPs
 def ip_normal(ip):
     try:
-        ip = ip.replace(",", "")
         ip = netaddr.IPAddress(ip)
         if ip.is_unicast() == True:
-            valid_ips.append(ip)
-    except:
+            return ip
+    except netaddr.core.AddrFormatError:
         invalid_ips.append(ip)
 
 # Check if given hostname is valid by doing a DNS lookup on the hostname.
@@ -50,11 +51,11 @@ def host_fqdn(hostname):
     try:
         socket.gethostbyname(hostname)
         return True
-    except:
+    except socket.gaierror:
         return False
 
 # Print all invalid ips
-def invalid_ips():
+def print_invalid_ips():
     print "Error! The following IPs are invalid:"
     for i in invalid_ips:
         print i
@@ -68,10 +69,10 @@ def lookup_hosts(ip):
         for response in resolver.query(hostname, 'A'):
             r.append(response)
             lookup_result = "%s resolved to %r for the lookup of %s" % (ip, ', '.join(map(str,r)), hostname)
-        recursing_dns.append(ip)
         if lookup_result != None:
             print lookup_result
-    except:
+            return ip
+    except dns.exception.Timeout:
         pass
 
 # Attempt to fingerprint the nameserver    
@@ -81,7 +82,7 @@ def dns_identify(ip):
     nm.scan(hosts=str(ip), arguments='-PN -sV -A -sU -p53')
     try:
         hosts += [(x, nm[x]['status']['state'], nm[x]['udp'][53]['script']['dns-nsid'].strip()) for x in nm.all_hosts()]
-    except:
+    except KeyError:
         unknown_hosts.append("%s is recursing, but couldn't determine running DNS software" % ip)
     for i in hosts:
         print "%s is %s and runs %s" % (i[0].encode("utf-8"), i[1].encode("utf-8"), i[2].encode("utf-8"))
@@ -107,14 +108,26 @@ valid_ips = []
 # Do the actual validation & conversion of items IPs
 def ip_input(ips):
     for ip in ips:
+        ip = ip.replace(",", "")
         if ip.count('.') != 3:
             invalid_ips.append(ip)
         elif '-' in ip:
-            ip_range(ip)
+            try:
+                for i in ip_range(ip):
+                    valid_ips.append(i)
+            except TypeError:
+                pass
         elif '/' in ip:
-            ip_cidr(ip)
+            try:
+                for i in ip_cidr(ip):
+                    valid_ips.append(i)
+            except TypeError:
+                pass
         else:
-            ip_normal(ip)
+            try:
+                valid_ips.append(ip_normal(ip))
+            except TypeError:
+                pass
         
 # Assign the hostname we will perform a DNS lookup for. Override if -host is given.
 hostname = 'google.com'
@@ -139,11 +152,11 @@ if args.filename:
 
 # Exit if we have invalid ips
 if len(invalid_ips) >= 1:
-    invalid_ips()
+    print_invalid_ips()
 
 # Remove duplicates & Sort valid_ips
 if len(valid_ips) > 0:
-    valid_ips = list(OrderedDict.fromkeys(valid_ips))
+    valid_ips =  sorted(set(valid_ips))
     
     # Now testing if it is recursing and print out the recursing servers.
     recursing_dns = []
@@ -154,7 +167,8 @@ if len(valid_ips) > 0:
         print total,"IPs left to test                       \r",
         sys.stdout.flush()
         total -= 1
-        lookup_hosts(ip)
+        if lookup_hosts(ip) != None:
+            recursing_dns.append(ip)
     
     # We only want to detect the running DNS version if there are any recursing servers.
     if len(recursing_dns) > 0:
