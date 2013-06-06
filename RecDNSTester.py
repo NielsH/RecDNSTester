@@ -8,7 +8,6 @@
 ## The IPs that resolved the given domain will be displayed
 
 import sys, argparse, netaddr, os.path, socket, dns.resolver, nmap
-from collections import OrderedDict
 
 # Validate filename
 def valid_file(parser, filename):
@@ -91,7 +90,7 @@ def dns_identify(ip):
 
 # Adding command-line options.
 parser=argparse.ArgumentParser()
-parser.add_argument('-v', action='version', version='%(prog)s - version 0.1', dest='version', help="Display the current version of the program.")
+parser.add_argument('-v', action='version', version='%(prog)s - version 0.2', dest='version', help="Display the current version of the program.")
 parser.add_argument('-host', nargs=1, dest='host', help="Override the default DNS lookup for google.com")
 parser.add_argument('-i', nargs='+', dest='ips', help="IPs that have to be scanned. Comma separated.")
 parser.add_argument('-f', nargs=1, dest='filename', metavar="FILE", type=lambda x: valid_file(parser, x), help="File with IPs that have to be scanned. Separated with newlines or commas.")
