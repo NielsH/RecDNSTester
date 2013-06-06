@@ -1,7 +1,7 @@
 RecDNSTester
 ============
 
-Python program to test if DNS servers are recusive.
+Python program to test if DNS servers are recursive.
 
 This is my first program. It is probably inefficient and perhaps buggy.
 
