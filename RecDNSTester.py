@@ -71,7 +71,7 @@ def lookup_hosts(ip):
         if lookup_result != None:
             print lookup_result
             return ip
-    except dns.exception.Timeout:
+    except (dns.resolver.NoAnswer, dns.exception.Timeout, dns.resolver.NoNameservers):
         pass
 
 # Attempt to fingerprint the nameserver    
